@@ -1,0 +1,60 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  build-and-deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: docker build -t ci-cd-project .
+
+      - name: Deploy to EC2
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > private_key
+          chmod 600 private_key
+
+          ssh -o StrictHostKeyChecking=no \
+            -i private_key \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+
+            cd ~/ci-cd-project
+
+            git pull origin main
+
+            sudo docker stop ci-cd-container || true
+            sudo docker rm ci-cd-container || true
+
+            sudo docker build -t ci-cd-project .
+
+            sudo docker run -d \
+              --name ci-cd-container \
+              -p 3000:3000 \
+              ci-cd-project
+
+          EOF
