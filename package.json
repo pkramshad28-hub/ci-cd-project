@@ -1,0 +1,13 @@
+{
+  "name": "ci-cd-project",
+  "version": "1.0.0",
+  "description": "End-to-End CI/CD Pipeline using GitHub Actions and AWS",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Tests passed\""
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
